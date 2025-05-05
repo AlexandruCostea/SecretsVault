@@ -1,5 +1,6 @@
 package com.alexcostea.secretsvault.ui.screens
 
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -19,7 +20,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.fragment.app.FragmentActivity
 import com.alexcostea.secretsvault.domain.entities.Secret
+import com.alexcostea.secretsvault.ui.utils.authentication.BiometricAuthenticator
 import com.alexcostea.secretsvault.ui.utils.PreferenceUtils
 import com.alexcostea.secretsvault.viewmodel.SecretsViewModel
 import kotlinx.coroutines.launch
@@ -41,18 +44,41 @@ fun <T : Secret> SecretScreen(
     var isLoading by remember { mutableStateOf(id != null) }
     val coroutineScope = rememberCoroutineScope()
     val keyboardController = LocalSoftwareKeyboardController.current
+    val activity = LocalActivity.current as FragmentActivity
+
 
     LaunchedEffect(id) {
         PreferenceUtils.setLastSecretType(context, secretType)
         if (id != null) {
             try {
-                initial = viewModel.getSecret(id)
+                BiometricAuthenticator.authenticate(
+                    activity = activity,
+                    onSuccess = {
+                        coroutineScope.launch {
+                            try {
+                                initial = viewModel.getSecret(id)
+                                isLoading = false
+                            } catch (e: Exception) {
+                                onBack()
+                                onMessage("Failed to load $secretType.")
+                                isLoading = false
+                            }
+                        }
+                    },
+                    onError = {
+                        onBack()
+                        onMessage("Failed to load $secretType.")
+                        isLoading = false
+                    },
+                )
             } catch (e: Exception) {
                 onBack()
                 onMessage("Failed to load $secretType.")
+                isLoading = false
             }
+        } else {
+            isLoading = false
         }
-        isLoading = false
     }
 
     Scaffold(
@@ -76,26 +102,50 @@ fun <T : Secret> SecretScreen(
                 { secret ->
                     coroutineScope.launch {
                         try {
-                            if (secret.id == 0) viewModel.addSecret(secret) else viewModel.updateSecret(secret)
-                            onMessage("$secretType saved successfully.")
+                            BiometricAuthenticator.authenticate(
+                                activity = activity,
+                                onSuccess = {
+                                    if (secret.id == 0) viewModel.addSecret(secret) else viewModel.updateSecret(secret)
+                                    onMessage("$secretType saved successfully.")
+                                    keyboardController?.hide()
+                                    onBack()
+                                },
+                                onError = {
+                                    onMessage("Failed to save $secretType.")
+                                    keyboardController?.hide()
+                                    onBack()
+                                },
+                            )
                         } catch (e: Exception) {
                             onMessage("Failed to save $secretType.")
+                            keyboardController?.hide()
+                            onBack()
                         }
-                        keyboardController?.hide()
-                        onBack()
                     }
                 },
                 initial?.let { _ ->
                     {
                         coroutineScope.launch {
                             try {
-                                viewModel.deleteSecret(initial!!.id)
-                                onMessage("$secretType deleted successfully.")
+                                BiometricAuthenticator.authenticate(
+                                    activity = activity,
+                                    onSuccess = {
+                                        viewModel.deleteSecret(initial!!.id)
+                                        onMessage("$secretType deleted successfully.")
+                                        keyboardController?.hide()
+                                        onBack()
+                                    },
+                                    onError = {
+                                        onMessage("Failed to delete $secretType.")
+                                        keyboardController?.hide()
+                                        onBack()
+                                    },
+                                )
                             } catch (e: Exception) {
                                 onMessage("Failed to delete $secretType.")
+                                keyboardController?.hide()
+                                onBack()
                             }
-                            keyboardController?.hide()
-                            onBack()
                         }
                     }
                 }

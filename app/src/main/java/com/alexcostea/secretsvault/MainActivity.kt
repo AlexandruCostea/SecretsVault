@@ -1,13 +1,14 @@
 package com.alexcostea.secretsvault
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.fragment.app.FragmentActivity
 import com.alexcostea.secretsvault.database.connection.MobileDatabaseConnectionManager
 import com.alexcostea.secretsvault.database.schema.initializer.CompositeTableInitializer
 import com.alexcostea.secretsvault.database.schema.initializer.SingleTableInitializer
@@ -35,10 +36,11 @@ import com.alexcostea.secretsvault.service.secrets.NoteSecretService
 import com.alexcostea.secretsvault.service.secrets.SecretService
 import com.alexcostea.secretsvault.ui.navigation.SecretsNavHost
 import com.alexcostea.secretsvault.ui.theme.SecretsVaultTheme
+import com.alexcostea.secretsvault.ui.utils.authentication.BiometricAuthenticator
 import com.alexcostea.secretsvault.ui.utils.SecretType
 import com.alexcostea.secretsvault.viewmodel.SecretsViewModel
 
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         MobileDatabaseConnectionManager.initialize(this)
@@ -77,14 +79,25 @@ class MainActivity : ComponentActivity() {
 
         val loginViewModel: SecretsViewModel<Login> = SecretsViewModel(loginService)
         val noteViewModel: SecretsViewModel<Note> = SecretsViewModel(noteService)
-        mobileAuthenticationService.login().get()
 
+        BiometricAuthenticator.authenticate(
+            activity = this@MainActivity,
+            onSuccess = {
+                mobileAuthenticationService.login().get()
+                loginViewModel.loadSecrets()
+                noteViewModel.loadSecrets()
+                showContent(loginViewModel, noteViewModel)
+            },
+            onError = {
+                Toast.makeText(this, "Authentication failed: $it", Toast.LENGTH_SHORT).show()
+            }
+        )
+    }
 
-        loginViewModel.loadSecrets()
-        noteViewModel.loadSecrets()
-
-
-
+    private fun showContent(
+        loginViewModel: SecretsViewModel<Login>,
+        noteViewModel: SecretsViewModel<Note>
+    ) {
         enableEdgeToEdge()
         setContent {
             SecretsVaultTheme {
@@ -96,16 +109,13 @@ class MainActivity : ComponentActivity() {
                     SecretType.NOTE to noteVM
                 )
 
-
                 Surface(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier.fillMaxSize()
                 ) {
                     SecretsNavHost(viewModels)
                 }
-
             }
         }
-
     }
 
     private fun initDb() {

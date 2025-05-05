@@ -45,7 +45,7 @@ fun SecretsNavHost(viewModels: Map<SecretType, SecretsViewModel<out Secret>>) {
             val job = launch {
                 snackbarHostState.showSnackbar(it)
             }
-            delay(800)
+            delay(1000)
             job.cancel()
             snackbarMessage = null
         }

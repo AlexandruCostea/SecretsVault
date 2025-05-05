@@ -37,7 +37,6 @@ import kotlinx.coroutines.launch
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
-import com.alexcostea.secretsvault.domain.factories.LoginFactory
 
 @Composable
 fun MainScreen(
@@ -54,7 +53,7 @@ fun MainScreen(
     var currentIndex = secretTypes.indexOf(selectedType)
 
     val swipeModifier = Modifier.pointerInput(Unit) {
-        detectHorizontalDragGestures { change, dragAmount ->
+        detectHorizontalDragGestures { _, dragAmount ->
             when {
                 // Swipe right (positive dragAmount) - go to previous tab
                 dragAmount > 50f && currentIndex > 0 -> {
@@ -97,7 +96,7 @@ fun MainScreen(
                     selectedTabIndex = currentIndex,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    secretTypes.forEachIndexed { index, type ->
+                    secretTypes.forEachIndexed { _, type ->
                         Tab(
                             selected = selectedType == type,
                             onClick = {

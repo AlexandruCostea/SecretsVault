@@ -42,8 +42,8 @@ public class AESEncryptionStrategy implements EncryptionStrategy {
         )
                 .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
                 .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
-                .setUserAuthenticationRequired(false)
-//                .setUserAuthenticationValidityDurationSeconds(300)
+                .setUserAuthenticationRequired(true)
+                .setUserAuthenticationValidityDurationSeconds(10)
                 .build();
 
         generator.init(spec);
