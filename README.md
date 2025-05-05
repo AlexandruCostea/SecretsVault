@@ -33,7 +33,9 @@ If authentication fails, decryption is blocked and access to the resource is den
 * Clean, intuitive Compose UI.
 * Lightweight and performant app architecture.
 * Every sensitive screen is protected by biometric gatekeeping.
-
+* <img src="https://github.com/AlexandruCostea/SecretsVault/blob/master/assets/MainMenu.jpg" alt="Main Menu" width="200" height="400"/>
+  <img src="https://github.com/AlexandruCostea/SecretsVault/blob/master/assets/AddLogin.jpg" alt="Add Login" width="200" height="400"/>
+  <img src="https://github.com/AlexandruCostea/SecretsVault/blob/master/assets/AddNote.jpg" alt="Add Note" width="200" height="400"/>
 ---
 
 ## 🛡️ Security Guarantees
